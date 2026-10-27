@@ -1,0 +1,17 @@
+# harsh's space (harshgupta.me)
+
+> the personal site of harsh gupta, a full-stack developer (php, wordpress, react, python) from chhattisgarh, india. one sentence, an interactive ringed planet made of ascii characters, a guestbook, and an occasional long post.
+
+## pages
+
+- https://harshgupta.me/ — the sentence: projects from github, recent writing, what's playing, and how to say hi
+- https://harshgupta.me/blog — writing. infrequent, long.
+- https://harshgupta.me/blog/simple-over-clever — "simple > clever, a year of commits": a read-back of a year on github
+
+## elsewhere
+
+- github: https://github.com/gupta-8
+- also: https://harshgupta.io
+- email: hello@harshgupta.me
+
+the site is a port of rex.wf
