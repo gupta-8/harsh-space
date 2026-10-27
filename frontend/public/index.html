@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content"
+        />
+        <script>
+            var d = document.documentElement, m = document.createElement("meta");
+            try {
+                if (localStorage.getItem("theme") === "dark") d.dataset.theme = "dark";
+                if (localStorage.getItem("sound") === "off") d.dataset.sound = "off";
+            } catch (e) {}
+            m.name = "theme-color";
+            m.content = d.dataset.theme ? "#131315" : "#faf8f2";
+            document.head.append(m);
+        </script>
+        <link rel="preload" href="%PUBLIC_URL%/fonts/instrument-serif-latin.woff2" as="font" type="font/woff2" crossorigin />
+        <link rel="preload" href="%PUBLIC_URL%/fonts/instrument-serif-latin-italic.woff2" as="font" type="font/woff2" crossorigin />
+        <link rel="preload" href="%PUBLIC_URL%/fonts/geist-mono-latin.woff2" as="font" type="font/woff2" crossorigin />
+        <link rel="preload" href="%PUBLIC_URL%/fonts/newsreader-latin.woff2" as="font" type="font/woff2" crossorigin />
+        <link rel="preload" href="%PUBLIC_URL%/fonts/newsreader-latin-italic.woff2" as="font" type="font/woff2" crossorigin />
+        <style>
+            @font-face {
+              font-family: "Geist Mono Variable";
+              font-style: normal;
+              font-weight: 400 700;
+              font-display: swap;
+              src: url("%PUBLIC_URL%/fonts/geist-mono-latin.woff2") format("woff2");
+              unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+                U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+            }
+            @font-face {
+              font-family: "Geist Mono Variable";
+              font-style: normal;
+              font-weight: 400 700;
+              font-display: swap;
+              src: url("%PUBLIC_URL%/fonts/geist-mono-latin-ext.woff2") format("woff2");
+              unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF,
+                U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+            }
+            @font-face {
+              font-family: "Geist Mono Variable";
+              font-style: normal;
+              font-weight: 400 700;
+              font-display: swap;
+              src: url("%PUBLIC_URL%/fonts/geist-mono-box.woff2") format("woff2");
+              unicode-range: U+2500, U+2502, U+250C, U+2510, U+2514, U+2518, U+251C, U+2581-2588, U+258C, U+2591;
+            }
+            @font-face {
+              font-family: "Instrument Serif";
+              font-style: normal;
+              font-weight: 400;
+              font-display: swap;
+              src: url("%PUBLIC_URL%/fonts/instrument-serif-latin.woff2") format("woff2");
+              unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+                U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+            }
+            @font-face {
+              font-family: "Instrument Serif";
+              font-style: normal;
+              font-weight: 400;
+              font-display: swap;
+              src: url("%PUBLIC_URL%/fonts/instrument-serif-latin-ext.woff2") format("woff2");
+              unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF,
+                U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+            }
+            @font-face {
+              font-family: "Instrument Serif";
+              font-style: italic;
+              font-weight: 400;
+              font-display: swap;
+              src: url("%PUBLIC_URL%/fonts/instrument-serif-latin-italic.woff2") format("woff2");
+              unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+                U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+            }
+            @font-face {
+              font-family: "Instrument Serif";
+              font-style: italic;
+              font-weight: 400;
+              font-display: swap;
+              src: url("%PUBLIC_URL%/fonts/instrument-serif-latin-ext-italic.woff2") format("woff2");
+              unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF,
+                U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+            }
+            @font-face {
+              font-family: "Newsreader Variable";
+              font-style: normal;
+              font-weight: 400 650;
+              font-display: swap;
+              src: url("%PUBLIC_URL%/fonts/newsreader-latin.woff2") format("woff2");
+              unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+                U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+            }
+            @font-face {
+              font-family: "Newsreader Variable";
+              font-style: normal;
+              font-weight: 400 650;
+              font-display: swap;
+              src: url("%PUBLIC_URL%/fonts/newsreader-latin-ext.woff2") format("woff2");
+              unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF,
+                U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+            }
+            @font-face {
+              font-family: "Newsreader Variable";
+              font-style: italic;
+              font-weight: 400 650;
+              font-display: swap;
+              src: url("%PUBLIC_URL%/fonts/newsreader-latin-italic.woff2") format("woff2");
+              unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+                U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+            }
+            @font-face {
+              font-family: "Newsreader Variable";
+              font-style: italic;
+              font-weight: 400 650;
+              font-display: swap;
+              src: url("%PUBLIC_URL%/fonts/newsreader-latin-ext-italic.woff2") format("woff2");
+              unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF,
+                U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+            }
+            /* Metric-matched local fallbacks so the swap doesn't reflow. */
+            @font-face {
+              font-family: "Instrument Serif Fallback";
+              font-style: normal;
+              src: local("Georgia");
+              ascent-override: 129.426%;
+              descent-override: 40.5273%;
+              size-adjust: 76.4916%;
+            }
+            @font-face {
+              font-family: "Instrument Serif Fallback";
+              font-style: italic;
+              src: local("Georgia Italic"), local("Georgia-Italic");
+              ascent-override: 129.426%;
+              descent-override: 40.5273%;
+              size-adjust: 76.4916%;
+            }
+            @font-face {
+              font-family: "Instrument Serif Fallback Times";
+              font-style: normal;
+              src: local("Times New Roman"), local("TimesNewRomanPSMT");
+              ascent-override: 117.9435%;
+              descent-override: 36.9318%;
+              line-gap-override: 0%;
+              size-adjust: 83.9385%;
+            }
+            @font-face {
+              font-family: "Instrument Serif Fallback Noto";
+              font-style: normal;
+              src: local("Noto Serif"), local("NotoSerif-Regular");
+              ascent-override: 139.48%;
+              descent-override: 43.68%;
+              line-gap-override: 0%;
+              size-adjust: 70.98%;
+            }
+            @font-face {
+              font-family: "Geist Mono Fallback";
+              src: local("Courier New"), local("CourierNewPSMT");
+              ascent-override: 100.5164%;
+              descent-override: 29.5048%;
+              size-adjust: 99.9837%;
+            }
+            @font-face {
+              font-family: "Newsreader Fallback";
+              font-style: normal;
+              src: local("Georgia");
+              ascent-override: 76.4676%;
+              descent-override: 27.5699%;
+              size-adjust: 96.1192%;
+            }
+            @font-face {
+              font-family: "Newsreader Fallback";
+              font-style: italic;
+              src: local("Georgia Italic"), local("Georgia-Italic");
+              ascent-override: 76.4676%;
+              descent-override: 27.5699%;
+              size-adjust: 96.1192%;
+            }
+        </style>
+        <title>harsh's space</title>
+        <meta name="description" content="harsh gupta builds things in php, wordpress, react and python, writes about some of them, and usually has something playing." />
+        <meta name="author" content="harsh gupta" />
+        <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+        <link rel="canonical" href="https://harshgupta.me/" />
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="harsh's space" />
+        <meta property="og:title" content="harsh's space" />
+        <meta property="og:description" content="projects, writing, and whatever's playing." />
+        <meta property="og:url" content="https://harshgupta.me/" />
+        <meta property="og:image" content="https://harshgupta.me/og.png" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta property="og:image:type" content="image/png" />
+        <meta property="og:image:alt" content="hi, i'm harsh. next to a ringed planet drawn in ascii characters." />
+        <meta property="og:locale" content="en_US" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:site" content="@harshguptame" />
+        <meta name="twitter:creator" content="@harshguptame" />
+        <meta name="twitter:title" content="harsh's space" />
+        <meta name="twitter:description" content="projects, writing, and whatever's playing." />
+        <meta name="twitter:image" content="https://harshgupta.me/og.png" />
+        <link rel="icon" href="%PUBLIC_URL%/favicon.svg" type="image/svg+xml" />
+        <link rel="icon" href="%PUBLIC_URL%/favicon.png" type="image/png" sizes="64x64" />
+        <link rel="apple-touch-icon" href="%PUBLIC_URL%/apple-touch-icon.png" />
+        <script type="application/ld+json">
+            {
+                "@context": "https://schema.org",
+                "@graph": [
+                    {
+                        "@type": "WebSite",
+                        "name": "harsh's space",
+                        "url": "https://harshgupta.me/",
+                        "description": "projects, writing, and whatever's playing.",
+                        "author": { "@id": "https://harshgupta.me/#person" }
+                    },
+                    {
+                        "@type": "Person",
+                        "@id": "https://harshgupta.me/#person",
+                        "name": "Harsh Gupta",
+                        "url": "https://harshgupta.me/",
+                        "email": "mailto:hello@harshgupta.me",
+                        "jobTitle": "full-stack developer",
+                        "sameAs": ["https://github.com/gupta-8", "https://x.com/harshguptame", "https://harshgupta.io/"]
+                    }
+                ]
+            }
+        </script>
+    </head>
+    <body class="antialiased">
+        <noscript>
+            <h1>hi, i'm harsh.</h1>
+            <p>i build things, i write about some of them, and usually have something on. say hi back.</p>
+            <p>hello@harshgupta.me · github.com/gupta-8</p>
+        </noscript>
+        <div id="root"></div>
+    </body>
+</html>
