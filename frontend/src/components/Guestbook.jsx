@@ -1,0 +1,459 @@
+import { useEffect, useRef, useState } from "react";
+import { sfx } from "@/lib/sfx";
+import { GUESTBOOK_LIMITS } from "@/lib/stats";
+import { patchStats, useSiteStats, visitor } from "@/lib/use-stats";
+import { API, isTouch } from "@/lib/utils";
+
+const ROTATE_MS = 6000;
+const SETTLE_MS = 2600;
+
+const ERRORS = {
+  cooldown: "( you were just here. tomorrow. )",
+  rude: "( be nice. )",
+  failed: "( that didn't take. try again? )",
+};
+
+const PARENS_RE = /^\(\s*|\s*\)$/g;
+
+const EMPTY_DRAFT = { message: "", name: "" };
+
+export default function Guestbook({ caption, onWriting }) {
+  const stats = useSiteStats();
+  const [open, setOpen] = useState(false);
+  const [hover, setHover] = useState(false);
+  const [mode, setMode] = useState("read");
+  const [index, setIndex] = useState(0);
+  const [fresh, setFresh] = useState(null);
+  const [draft, setDraft] = useState(EMPTY_DRAFT);
+  const rootRef = useRef(null);
+  const lineRef = useRef(null);
+  const recent = stats?.recent ?? [];
+  const writing = mode === "write" && (open || hover);
+
+  useEffect(() => {
+    onWriting?.(writing);
+  }, [writing, onWriting]);
+
+  useEffect(() => {
+    if (recent.length < 2) {
+      return;
+    }
+    const timer = setInterval(() => setIndex((i) => (i + 1) % recent.length), ROTATE_MS);
+    return () => clearInterval(timer);
+  }, [recent.length]);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+    const away = (event) => {
+      if (!rootRef.current?.contains(event.target)) {
+        setOpen(false);
+      }
+    };
+    const onKey = (event) => {
+      if (event.key === "Escape") {
+        setOpen(false);
+      }
+    };
+    window.addEventListener("pointerdown", away);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("pointerdown", away);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (fresh === null) {
+      return;
+    }
+    const timer = setTimeout(() => setFresh(null), SETTLE_MS);
+    return () => clearTimeout(timer);
+  }, [fresh]);
+
+  if (!stats) {
+    return (
+      <span className="guestbook" data-loading="" data-testid="guestbook">
+        <button className="guestbook-line" type="button" data-testid="guestbook-line">
+          <span className="sr-only">guestbook: </span>
+          <Caption caption={caption} />
+        </button>
+      </span>
+    );
+  }
+
+  const latest = recent[index % Math.max(1, recent.length)];
+
+  return (
+    <span
+      className="guestbook"
+      data-open={open || hover ? "" : undefined}
+      data-testid="guestbook"
+      onBlur={(event) => {
+        if (event.relatedTarget && !rootRef.current?.contains(event.relatedTarget)) {
+          setOpen(false);
+        }
+      }}
+      onFocus={(event) => {
+        if (event.target.matches(":focus-visible")) {
+          setOpen(true);
+        }
+      }}
+      onPointerEnter={(event) => {
+        if (event.pointerType === "mouse" && matchMedia("(hover: hover)").matches) {
+          setHover(true);
+          sfx("pop");
+        }
+      }}
+      onPointerLeave={() => setHover(false)}
+      ref={rootRef}
+    >
+      <button
+        aria-expanded={open}
+        className="guestbook-line"
+        data-testid="guestbook-line"
+        onClick={() => {
+          sfx(open ? "pause" : "pop");
+          setOpen((v) => !v);
+        }}
+        ref={lineRef}
+        type="button"
+      >
+        <span className="sr-only">guestbook: </span>
+        <Caption caption={caption}>
+          <span className="gb-corner" data-testid="guestbook-corner">
+            {Math.max(1, stats.online)} here
+            {latest ? (
+              <>
+                <span aria-hidden="true" className="text-faint">
+                  {" · "}
+                </span>
+                <span className="swap-in" key={`${latest.place}-${latest.ago}`}>
+                  last from {latest.place}, {latest.ago}
+                </span>
+              </>
+            ) : null}
+          </span>
+        </Caption>
+      </button>
+
+      <span
+        aria-hidden="true"
+        className="gb-scrim"
+        onClick={() => {
+          sfx("pause");
+          setOpen(false);
+          setHover(false);
+        }}
+      />
+
+      <span className="guestbook-peek">
+        <span className="peek-card guestbook-card" data-testid="guestbook-card">
+          <span className="peek-tab">{mode === "write" ? "leave a line" : "guestbook"}</span>
+
+          {mode === "write" ? (
+            <SignForm
+              draft={draft}
+              key="write"
+              onBack={() => {
+                setMode("read");
+                lineRef.current?.focus();
+              }}
+              onDraft={setDraft}
+              onSigned={(entry) => {
+                setFresh(entry.id);
+                setDraft(EMPTY_DRAFT);
+                setMode("read");
+                lineRef.current?.focus();
+              }}
+            />
+          ) : (
+            <span className="gb-view" key="read">
+              {recent.length > 0 ? (
+                <span className="gb-section" data-testid="guestbook-recent">
+                  <span className="gb-label">here lately</span>
+                  {recent.slice(0, 3).map((guest) => (
+                    <span className="guest" key={guest.tag}>
+                      <span className="guest-place">{guest.place}</span>
+                      <span className="guest-page">{guest.path}</span>
+                      <span className="guest-ago">{guest.ago}</span>
+                    </span>
+                  ))}
+                </span>
+              ) : null}
+
+              <span className="gb-section" data-testid="guestbook-signed">
+                <span className="gb-label">
+                  signed
+                  {stats.signed > GUESTBOOK_LIMITS.shown ? <span className="gb-count"> · {stats.signed}</span> : null}
+                </span>
+                {stats.guestbook.length === 0 ? (
+                  <span className="signature-empty">nobody yet.</span>
+                ) : (
+                  stats.guestbook.map((entry) => (
+                    <span
+                      className="signature"
+                      data-fresh={entry.id === fresh ? "" : undefined}
+                      key={entry.id}
+                      data-testid={`signature-${entry.id}`}
+                    >
+                      <span className="signature-msg">“{entry.message}”</span>
+                      <span className="signature-by">
+                        <span className="dash">—</span> {entry.name}
+                        {entry.place === "somewhere" ? "" : `, ${entry.place}`}
+                        <span className="text-faint"> · {entry.ago}</span>
+                      </span>
+                    </span>
+                  ))
+                )}
+                {fresh === null ? (
+                  <button
+                    className="gb-write-link"
+                    data-testid="guestbook-write-button"
+                    onClick={() => {
+                      sfx("tick");
+                      setMode("write");
+                      setOpen(true);
+                    }}
+                    type="button"
+                  >
+                    leave a line <span className="arrow">→</span>
+                  </button>
+                ) : (
+                  <span className="gb-thanks swap-in" data-testid="guestbook-thanks">
+                    ( signed. thank you. )
+                  </span>
+                )}
+              </span>
+
+              <span className="guest-foot" data-testid="guestbook-foot">
+                <span>
+                  {stats.today} today · {stats.week.toLocaleString("en-US")} this week
+                </span>
+                <span className="guest-no">
+                  you are visitor №{" "}
+                  <span className="text-ink tabular-nums" data-testid="visitor-number">
+                    {stats.total.toLocaleString("en-US")}
+                  </span>
+                </span>
+              </span>
+            </span>
+          )}
+        </span>
+      </span>
+    </span>
+  );
+}
+
+// "( • corner-or-caption )": desktop shows the corner, mobile the caption.
+function Caption({ caption, children }) {
+  return (
+    <>
+      <span aria-hidden="true" className="paren">
+        (
+      </span>{" "}
+      <span className="guest-dot" />
+      {children}
+      <span className="gb-caption">
+        <span className="swap-in" key={caption}>
+          {caption.replace(PARENS_RE, "")}
+        </span>
+      </span>{" "}
+      <span aria-hidden="true" className="paren">
+        )
+      </span>
+    </>
+  );
+}
+
+function SignForm({ draft, onBack, onDraft, onSigned }) {
+  const [state, setState] = useState("idle");
+  const { message, name } = draft;
+  const timer = useRef(undefined);
+
+  useEffect(() => () => clearTimeout(timer.current), []);
+
+  const fail = (next) => {
+    setState(next);
+    clearTimeout(timer.current);
+    timer.current = setTimeout(() => setState("idle"), SETTLE_MS);
+  };
+
+  const submit = async (event) => {
+    event?.preventDefault();
+    const text = message.trim();
+    if (!text || state === "sending") {
+      return;
+    }
+    setState("sending");
+    try {
+      const response = await fetch(`${API}/guestbook`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ name: name.trim(), message: text, visitor: visitor() }),
+      });
+      const result = await response.json().catch(() => null);
+      if (result?.ok) {
+        sfx("pop");
+        patchStats((stats) => ({
+          ...stats,
+          signed: stats.signed + 1,
+          guestbook: [result.entry, ...stats.guestbook].slice(0, GUESTBOOK_LIMITS.shown),
+        }));
+        onSigned(result.entry);
+      } else {
+        fail(result?.reason === "cooldown" || result?.reason === "rude" ? result.reason : "failed");
+      }
+    } catch {
+      fail("failed");
+    }
+  };
+
+  const ready = message.trim().length > 0;
+  const left = GUESTBOOK_LIMITS.message - Array.from(message).length;
+
+  return (
+    <form
+      className="gb-view sign"
+      data-ready={ready ? "" : undefined}
+      data-state={state}
+      data-testid="guestbook-form"
+      onSubmit={submit}
+    >
+      <span className="sign-text">
+        “
+        <Editable
+          autoFocus
+          label="leave a line"
+          max={GUESTBOOK_LIMITS.message}
+          onChange={(text) => onDraft((d) => ({ ...d, message: text }))}
+          onEnter={submit}
+          onEscape={onBack}
+          placeholder="say something, anything"
+          testId="guestbook-message-input"
+          value={message}
+        />
+        <span className="sign-quote-close">”</span>
+        <br />
+        <span className="text-muted">— </span>
+        <Editable
+          label="your name"
+          max={GUESTBOOK_LIMITS.name}
+          onChange={(text) => onDraft((d) => ({ ...d, name: text }))}
+          onEnter={submit}
+          onEscape={onBack}
+          placeholder="anonymous"
+          testId="guestbook-name-input"
+          value={name}
+        />
+        <span className="text-rose">.</span>
+      </span>
+      <span className="sign-foot">
+        <button className="gb-back" onClick={onBack} type="button" data-testid="guestbook-back-button">
+          <span className="arrow">←</span> back
+        </button>
+        {ERRORS[state] ? (
+          <span className="sign-error swap-in" key={state} data-testid="guestbook-error">
+            {ERRORS[state]}
+          </span>
+        ) : (
+          <span className="sign-actions">
+            {left <= 20 ? <span className="sign-left">{left}</span> : null}
+            <button
+              className="sign-go"
+              disabled={state === "sending" || !ready}
+              type="submit"
+              data-testid="guestbook-submit-button"
+            >
+              {state === "sending" ? (
+                <span className="sign-dots">
+                  <i />
+                  <i />
+                  <i />
+                </span>
+              ) : (
+                <>
+                  sign <span className="arrow">→</span>
+                </>
+              )}
+            </button>
+          </span>
+        )}
+      </span>
+    </form>
+  );
+}
+
+function Editable({ autoFocus = false, label, max, onChange, onEnter, onEscape, placeholder, testId, value }) {
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (el && el.textContent !== value) {
+      el.textContent = value;
+    }
+  }, [value]);
+
+  useEffect(() => {
+    if (autoFocus && !isTouch()) {
+      ref.current?.focus();
+    }
+  }, [autoFocus]);
+
+  const onKeyDown = (event) => {
+    if (event.key === "Enter" && !event.nativeEvent.isComposing) {
+      event.preventDefault();
+      onEnter();
+    } else if (event.key === "Escape") {
+      event.preventDefault();
+      event.stopPropagation();
+      onEscape();
+    }
+  };
+
+  return (
+    <span
+      aria-label={label}
+      aria-multiline="false"
+      autoCapitalize="none"
+      className="ed"
+      contentEditable="plaintext-only"
+      data-placeholder={placeholder}
+      data-testid={testId}
+      enterKeyHint="send"
+      onBeforeInput={(event) => {
+        if (event.data && getSelection()?.isCollapsed && Array.from(event.currentTarget.textContent ?? "").length >= max) {
+          event.preventDefault();
+        }
+      }}
+      onInput={(event) => {
+        const el = event.currentTarget;
+        const raw = el.textContent ?? "";
+        let text = raw.replaceAll(/[\r\n\t]+/g, " ");
+        const chars = Array.from(text);
+        if (chars.length > max) {
+          text = chars.slice(0, max).join("");
+        }
+        if (text !== raw) {
+          el.textContent = text;
+          const range = document.createRange();
+          range.selectNodeContents(el);
+          range.collapse(false);
+          const selection = getSelection();
+          selection?.removeAllRanges();
+          selection?.addRange(range);
+        }
+        if (!text) {
+          el.replaceChildren();
+        }
+        onChange(text);
+      }}
+      onKeyDown={onKeyDown}
+      ref={ref}
+      role="textbox"
+      suppressContentEditableWarning
+      tabIndex={0}
+    />
+  );
+}
