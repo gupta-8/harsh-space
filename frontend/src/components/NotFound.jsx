@@ -1,0 +1,199 @@
+import { useEffect, useRef, useState } from "react";
+import BackLink from "@/components/BackLink";
+import TintStrips from "@/components/TintStrips";
+import { reducedMotion } from "@/lib/utils";
+
+const GRID = [
+  [1, 0, 0, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 0, 0, 1],
+  [1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1],
+  [1, 1, 1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 1, 1],
+  [0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1],
+  [0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1],
+];
+
+const ROWS = GRID.length;
+const COLS = GRID[0].length;
+const REPEL_RADIUS = 120;
+const REPEL_STRENGTH = 4000;
+
+function seededRandom(seed) {
+  let s = seed;
+  return () => {
+    s = (s * 16_807) % 2_147_483_647;
+    return (s - 1) / 2_147_483_646;
+  };
+}
+
+const SCATTER_OFFSETS = (() => {
+  const rand = seededRandom(404);
+  return Array.from({ length: ROWS * COLS }, () => ({ x: (rand() - 0.5) * 600, y: (rand() - 0.5) * 400 }));
+})();
+
+function forEachCell(fn, cells) {
+  for (let r = 0; r < ROWS; r += 1) {
+    for (let c = 0; c < COLS; c += 1) {
+      if (!GRID[r][c]) continue;
+      const el = cells[r * COLS + c];
+      if (el) fn(el, r, c);
+    }
+  }
+}
+
+const GLYPHS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*";
+
+function ScrambleLink({ text, to }) {
+  const [display, setDisplay] = useState(text);
+  const ref = useRef(undefined);
+
+  useEffect(() => () => clearInterval(ref.current), []);
+
+  const stop = () => {
+    clearInterval(ref.current);
+    setDisplay(text);
+  };
+
+  const start = () => {
+    let t = 0;
+    stop();
+    ref.current = setInterval(() => {
+      if (t >= text.length) return stop();
+      setDisplay(
+        Array.from(text, (ch, i) => (ch === " " || i < t ? ch : GLYPHS[Math.floor(Math.random() * GLYPHS.length)])).join("")
+      );
+      t += 1 / 3;
+    }, 30);
+  };
+
+  return (
+    <BackLink
+      className="rise mt-6 font-mono text-muted text-xs"
+      data-testid="not-found-home-link"
+      onMouseEnter={start}
+      onMouseLeave={stop}
+      style={{ animationDelay: "900ms" }}
+      to={to}
+    >
+      {display}
+    </BackLink>
+  );
+}
+
+export default function NotFound({ to = "/" }) {
+  const containerRef = useRef(null);
+  const cellRefs = useRef([]);
+  const mousePos = useRef(null);
+  const frame = useRef(0);
+  const assembled = useRef(false);
+
+  useEffect(() => {
+    document.title = "not found";
+    const cells = cellRefs.current;
+
+    const assembleTimeout = setTimeout(() => {
+      forEachCell((el) => {
+        el.style.transition = "transform 0.8s var(--ease-spring), opacity 0.6s ease-out";
+        el.style.transform = "translate(0px, 0px)";
+        el.style.opacity = "1";
+      }, cells);
+    }, 100);
+
+    const interactiveTimeout = setTimeout(() => {
+      assembled.current = true;
+      forEachCell((el) => {
+        el.style.transition = "transform 0.3s ease-out, opacity 0.3s ease-out";
+      }, cells);
+    }, 1000);
+
+    return () => {
+      clearTimeout(assembleTimeout);
+      clearTimeout(interactiveTimeout);
+      cancelAnimationFrame(frame.current);
+    };
+  }, []);
+
+  const repel = () => {
+    frame.current = 0;
+    const container = containerRef.current;
+    if (!container) return;
+
+    const rect = container.getBoundingClientRect();
+    const cellW = rect.width / COLS;
+    const cellH = rect.height / ROWS;
+    const mp = mousePos.current;
+
+    forEachCell((el, r, c) => {
+      const dx = rect.left + c * cellW + cellW / 2 - (mp?.x ?? 0);
+      const dy = rect.top + r * cellH + cellH / 2 - (mp?.y ?? 0);
+      const dist = Math.hypot(dx, dy);
+
+      if (mp && dist < REPEL_RADIUS) {
+        const force = REPEL_STRENGTH / (dist * dist + 1);
+        const angle = Math.atan2(dy, dx);
+        el.style.transform = `translate(${Math.cos(angle) * force}px, ${Math.sin(angle) * force}px)`;
+        el.style.opacity = `${Math.max(0.2, dist / REPEL_RADIUS)}`;
+      } else {
+        el.style.transform = "translate(0px, 0px)";
+        el.style.opacity = "1";
+      }
+    }, cellRefs.current);
+  };
+
+  const setPointer = (pos) => {
+    mousePos.current = pos;
+    if (assembled.current && !frame.current && !reducedMotion()) {
+      frame.current = requestAnimationFrame(repel);
+    }
+  };
+
+  return (
+    <main
+      className="fixed inset-0 overflow-hidden paper text-ink"
+      data-testid="not-found-page"
+      onMouseLeave={() => setPointer(null)}
+      onMouseMove={(e) => setPointer({ x: e.clientX, y: e.clientY })}
+      onTouchEnd={() => setPointer(null)}
+      onTouchMove={(e) => setPointer({ x: e.touches[0].clientX, y: e.touches[0].clientY })}
+    >
+      <div className="flex h-full flex-col items-center justify-center">
+        <div
+          aria-label="404"
+          className="relative w-[min(448px,85vw)]"
+          ref={containerRef}
+          role="img"
+          style={{ aspectRatio: `${COLS} / ${ROWS}` }}
+        >
+          {GRID.flatMap((row, r) =>
+            row.map((cell, c) => {
+              if (!cell) return null;
+              const idx = r * COLS + c;
+              const { x, y } = SCATTER_OFFSETS[idx];
+              return (
+                <span
+                  className="absolute bg-rose bg-clip-content p-px"
+                  key={idx}
+                  ref={(el) => {
+                    cellRefs.current[idx] = el;
+                  }}
+                  style={{
+                    left: `${(c / COLS) * 100}%`,
+                    top: `${(r / ROWS) * 100}%`,
+                    width: `${(1 / COLS) * 100}%`,
+                    height: `${(1 / ROWS) * 100}%`,
+                    transform: `translate(${x}px, ${y}px)`,
+                    opacity: 0,
+                    willChange: "transform, opacity",
+                  }}
+                />
+              );
+            })
+          )}
+        </div>
+        <p className="rise mt-12 font-mono text-faint text-xs italic" style={{ animationDelay: "800ms" }}>
+          ( no such page. the planet checked. )
+        </p>
+        <ScrambleLink text={to === "/" ? "home" : "writing"} to={to} />
+      </div>
+      <TintStrips />
+    </main>
+  );
+}
