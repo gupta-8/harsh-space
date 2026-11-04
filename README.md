@@ -17,7 +17,7 @@ A tiny personal site that fits on one screen.
 
 - **the sentence** — *hi, i'm harsh. i build things, i write about some of them, and usually have something on. say hi back.* The italic words are links; hover (or tap) one and a small monospace card peeks out: my top GitHub repos with a year of contribution squares, recent writing with read counts, the song that's on with a 30-second preview, and the places you can say hi.
 - **the planet** — a ringed planet drawn from ~600 ascii characters on a canvas. It blooms in, scatters around your cursor, glows pink, bursts when you click (with a little sound), and reshapes itself while you hover the sentence: a spinning wireframe cube for *build things*, a blinking caret for *write*, the album cover's colours for *something*, the word "hi" for *say hi back*, a sheet of paper while you write in the guestbook. A tiny moon orbits it when nobody is touching it.
-- **the guestbook** — `( 3 here · last from pune, 2m )` under the planet. Open it to see who's around (approximate city only), read the last few lines people left, and leave one yourself: 140 characters, a name if you want, one line a day.
+- **the guestbook** — under the planet. Open it to see who's around (approximate city only), read the last few lines people left, and leave one yourself: 140 characters, a name if you want, one line a day.
 - **writing** — posts are plain markdown files in `backend/posts/`. Headings become a table of contents, code blocks get a copy button, and reads are counted.
 - **small things** — lights on/off and sound on/off in the corner (remembered per device), a 404 the planet checked, share images, `prefers-reduced-motion` respected, everything lowercase.
 
