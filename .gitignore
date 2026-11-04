@@ -1,0 +1,23 @@
+# dependencies
+node_modules/
+
+# builds
+frontend/build/
+
+# environment
+.env
+.env.*
+!.env.example
+
+# python
+__pycache__/
+*.pyc
+.venv/
+
+# editors & os
+.vscode/
+.idea/
+.DS_Store
+
+# archives
+*.zip
