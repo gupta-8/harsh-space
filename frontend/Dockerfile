@@ -4,6 +4,7 @@ WORKDIR /app
 ARG REACT_APP_BACKEND_URL=
 ENV REACT_APP_BACKEND_URL=$REACT_APP_BACKEND_URL
 COPY package.json ./
+ENV NODE_OPTIONS=--max-old-space-size=1536
 RUN yarn install --frozen-lockfile 2>/dev/null || yarn install
 COPY . .
 RUN yarn build
